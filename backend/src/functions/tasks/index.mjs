@@ -1,11 +1,12 @@
-import { handlecreateTask } from "./createTask.mjs";
+import { handleCreateTask } from "./createTask.mjs";
+import {errorResponse, HttpError, respond} from "../../shared/helper.mjs";
 
 const routes = {
-    "POST /tasks": handlecreateTask
+    "POST /tasks": handleCreateTask
 }
 
-const handler = async (event) => {
-    const route = [`${event.HttpMethod} ${event.resource}`]
+export const handler = async (event) => {
+    const route = routes[`${event.httpMethod} ${event.resource}`]
 
     try {
         if (!route) 
