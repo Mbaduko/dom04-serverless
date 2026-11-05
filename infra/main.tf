@@ -35,7 +35,7 @@ resource "aws_iam_role" "lambda_role" {
 data "aws_iam_policy_document" "dynamodb_policy" {
   statement {
     actions = [
-      "dynamodb:PutItem "
+      "dynamodb:PutItem"
     ]
     resources = [
       aws_dynamodb_table.tasks.arn
@@ -44,7 +44,7 @@ data "aws_iam_policy_document" "dynamodb_policy" {
 }
 
 resource "aws_cloudwatch_log_group" "lambda_log_group" {
-  name              = "asw/lambda/${aws_lambda_function.backend.function_name}"
+  name              = "/aws/lambda/${aws_lambda_function.backend.function_name}"
   retention_in_days = var.log_retention_days
 }
 
@@ -86,6 +86,7 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
 
 resource "aws_lambda_function" "backend" {
   filename      = data.archive_file.backend.output_path
+  source_code_hash = data.archive_file.backend.output_base64sha256
   function_name = "${var.project}-${var.environment}-backend"
   role          = aws_iam_role.lambda_role.arn
   handler       = "functions/tasks/index.handler"

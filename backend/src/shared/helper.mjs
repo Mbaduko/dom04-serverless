@@ -33,6 +33,8 @@ export const readBody = (event) => {
     ? Buffer.from(event.body, "base64").toString("utf8")
     : event.body;
   try {
+    if (typeof raw === "object") 
+      return raw;
     return JSON.parse(raw);
   } catch (error) {
     console.error("Invalid JSON::", error)
