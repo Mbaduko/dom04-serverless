@@ -34,7 +34,8 @@ export const readBody = (event) => {
     : event.body;
   try {
     return JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    console.error("Invalid JSON::", error)
     throw new HttpError(400, "INVALID_JSON", "Request body must be valid JSON");
   }
 };

@@ -18,3 +18,8 @@ variable "project" {
   description = "Project name used for tagging and resource naming"
   type        = string
 }
+
+variable "log_retention_days" {
+  description = "Number of days to retain logs in CloudWatch"
+  type        = number
+}

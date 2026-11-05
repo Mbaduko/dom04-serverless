@@ -1,5 +1,5 @@
 import { handleCreateTask } from "./createTask.mjs";
-import {errorResponse, HttpError, respond} from "../../shared/helper.mjs";
+import {errorResponse, HttpError} from "../../shared/helper.mjs";
 
 const routes = {
     "POST /tasks": handleCreateTask
