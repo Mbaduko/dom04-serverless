@@ -1,3 +1,4 @@
+# Stores Terraform state in S3, encrypted with KMS and with state locking
 terraform {
   backend "s3" {
     bucket       = "domo4-288761743924"
