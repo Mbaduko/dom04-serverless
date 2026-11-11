@@ -10,12 +10,22 @@ resource "aws_api_gateway_resource" "tasks" {
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
 }
 
-# POST method on /tasks (no authorization)
+# Validates Cognito ID tokens sent in the Authorization header
+resource "aws_api_gateway_authorizer" "cognito" {
+  name            = "${var.project}-${var.environment}-cognito"
+  rest_api_id     = aws_api_gateway_rest_api.api.id
+  type            = "COGNITO_USER_POOLS"
+  provider_arns   = [aws_cognito_user_pool.users.arn]
+  identity_source = "method.request.header.Authorization"
+}
+
+# POST method on /tasks (requires a Cognito login)
 resource "aws_api_gateway_method" "post_tasks" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   resource_id   = aws_api_gateway_resource.tasks.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
 }
 
 # Proxies POST /tasks requests to the Lambda function
@@ -31,6 +41,15 @@ resource "aws_api_gateway_integration" "post_tasks_integration" {
 # Snapshot of the API configuration that can be served by a stage
 resource "aws_api_gateway_deployment" "api_deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.tasks,
+      aws_api_gateway_method.post_tasks,
+      aws_api_gateway_integration.post_tasks_integration,
+      aws_api_gateway_authorizer.cognito,
+    ]))
+  }
 
   lifecycle {
     create_before_destroy = true
