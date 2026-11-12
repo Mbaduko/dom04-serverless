@@ -1,15 +1,10 @@
 import { Authenticator } from '@aws-amplify/ui-react'
+import Dashboard from './components/Dashboard'
 
 export default function App() {
   return (
     <Authenticator hideSignUp>
-      {({ signOut, user }) => (
-        <main className="dashboard">
-          <h1>Task Manager</h1>
-          <p>Signed in as {user?.signInDetails?.loginId}</p>
-          <button onClick={signOut}>Sign out</button>
-        </main>
-      )}
+      {({ signOut }) => <Dashboard signOut={signOut} />}
     </Authenticator>
   )
 }
