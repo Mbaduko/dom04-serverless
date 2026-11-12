@@ -23,15 +23,26 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-# Permissions for the Lambda to write items to the tasks table
+# Permissions for the tasks Lambda to manage tasks and read user profiles
 data "aws_iam_policy_document" "dynamodb_policy" {
   statement {
     actions = [
-      "dynamodb:PutItem"
+      "dynamodb:PutItem",
+      "dynamodb:GetItem",
+      "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
+      "dynamodb:Scan",
+      "dynamodb:Query",
     ]
     resources = [
-      aws_dynamodb_table.tasks.arn
+      aws_dynamodb_table.tasks.arn,
+      "${aws_dynamodb_table.tasks.arn}/index/*",
     ]
+  }
+
+  statement {
+    actions   = ["dynamodb:GetItem"]
+    resources = [aws_dynamodb_table.users.arn]
   }
 }
 
@@ -86,7 +97,85 @@ resource "aws_lambda_function" "backend" {
 
   environment {
     variables = {
-      TASKS_TABLE = aws_dynamodb_table.tasks.name
+      TASKS_TABLE    = aws_dynamodb_table.tasks.name
+      USERS_TABLE    = aws_dynamodb_table.users.name
+      ALLOWED_ORIGIN = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+    }
+  }
+}
+
+# IAM role the users Lambda runs as
+resource "aws_iam_role" "users_lambda_role" {
+  name = "${var.project}-${var.environment}-users-lambda-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          "Service" = "lambda.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+}
+
+# CloudWatch log group for the users Lambda
+resource "aws_cloudwatch_log_group" "users_lambda_log_group" {
+  name              = "/aws/lambda/${aws_lambda_function.users.function_name}"
+  retention_in_days = var.log_retention_days
+}
+
+# Permissions for the users Lambda: create Cognito users, manage profiles, write logs
+data "aws_iam_policy_document" "users_lambda_policy" {
+  statement {
+    actions = [
+      "cognito-idp:AdminCreateUser",
+      "cognito-idp:AdminAddUserToGroup",
+    ]
+    resources = [aws_cognito_user_pool.users.arn]
+  }
+
+  statement {
+    actions = [
+      "dynamodb:PutItem",
+      "dynamodb:Scan",
+    ]
+    resources = [aws_dynamodb_table.users.arn]
+  }
+
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
+    ]
+    resources = ["${aws_cloudwatch_log_group.users_lambda_log_group.arn}:*"]
+  }
+}
+
+# Inline policy on the users Lambda role
+resource "aws_iam_role_policy" "users_lambda_policy" {
+  name   = "${var.project}-${var.environment}-users-lambda-policy"
+  policy = data.aws_iam_policy_document.users_lambda_policy.json
+  role   = aws_iam_role.users_lambda_role.id
+}
+
+# Lambda function that handles the users API requests
+resource "aws_lambda_function" "users" {
+  filename         = data.archive_file.backend.output_path
+  source_code_hash = data.archive_file.backend.output_base64sha256
+  function_name    = "${var.project}-${var.environment}-users"
+  role             = aws_iam_role.users_lambda_role.arn
+  handler          = "functions/users/index.handler"
+  runtime          = "nodejs24.x"
+
+  environment {
+    variables = {
+      USERS_TABLE    = aws_dynamodb_table.users.name
+      USER_POOL_ID   = aws_cognito_user_pool.users.id
+      ALLOWED_ORIGIN = "https://${aws_cloudfront_distribution.frontend.domain_name}"
     }
   }
 }
