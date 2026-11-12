@@ -1,29 +1,32 @@
-import {DynamoDBClient} from "@aws-sdk/client-dynamodb";
-import {DynamoDBDocumentClient, PutCommand} from "@aws-sdk/lib-dynamodb";
-import {randomUUID} from "crypto";
-import {readBody, respond, HttpError} from "../../shared/helper.mjs";
-
-const TABLE = process.env.TASKS_TABLE
-
-if (!TABLE) 
-    throw new HttpError(500, "INTERNAL_ERROR", "TASKS_TABLE environment variable is not set");
-
-const db = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { randomUUID } from "crypto";
+import { readBody, respond } from "../../shared/helper.mjs";
+import { db } from "../../shared/db.mjs";
+import { getUser, requireAdmin } from "../../shared/auth.mjs";
+import { validateNewTask } from "../../shared/validation.mjs";
+import { TASKS_TABLE } from "./taskStore.mjs";
 
 export async function handleCreateTask(event) {
-    const body = readBody(event);
+  const user = getUser(event);
+  requireAdmin(user);
 
-    const task = {
-        taskId: randomUUID(),
-        ...body,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    }
+  const input = validateNewTask(readBody(event));
+  const now = new Date().toISOString();
 
-    await db.send(new PutCommand({
-        TableName: TABLE,
-        Item: task
-    }));
+  const task = {
+    ...input,
+    taskId: randomUUID(),
+    status: "TODO",
+    createdBy: user.sub,
+    createdAt: now,
+    updatedAt: now,
+  };
 
-    return respond(201, task);
+  await db.send(new PutCommand({
+    TableName: TASKS_TABLE,
+    Item: task,
+    ConditionExpression: "attribute_not_exists(taskId)",
+  }));
+
+  return respond(201, task);
 }
