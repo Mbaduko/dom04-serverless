@@ -2,12 +2,14 @@ locals {
   allowed_origin = "https://${aws_cloudfront_distribution.frontend.domain_name}"
 
   api_paths = {
-    "/tasks"                       = aws_api_gateway_resource.tasks.id
-    "/tasks/{taskId}"              = aws_api_gateway_resource.task.id
-    "/tasks/{taskId}/assign"       = aws_api_gateway_resource.task_assign.id
-    "/tasks/{taskId}/notify"       = aws_api_gateway_resource.task_notify.id
-    "/users"                       = aws_api_gateway_resource.users.id
-    "/users/{userId}/subscription" = aws_api_gateway_resource.user_subscription.id
+    "/tasks"                                     = aws_api_gateway_resource.tasks.id
+    "/tasks/{taskId}"                            = aws_api_gateway_resource.task.id
+    "/tasks/{taskId}/assign"                     = aws_api_gateway_resource.task_assign.id
+    "/tasks/{taskId}/notify"                     = aws_api_gateway_resource.task_notify.id
+    "/tasks/{taskId}/attachments"                = aws_api_gateway_resource.task_attachments.id
+    "/tasks/{taskId}/attachments/{attachmentId}" = aws_api_gateway_resource.task_attachment.id
+    "/users"                                     = aws_api_gateway_resource.users.id
+    "/users/{userId}/subscription"               = aws_api_gateway_resource.user_subscription.id
   }
 
   api_functions = {
@@ -16,16 +18,19 @@ locals {
   }
 
   api_routes = {
-    "POST /tasks"                       = { path = "/tasks", method = "POST", function = "tasks" }
-    "GET /tasks"                        = { path = "/tasks", method = "GET", function = "tasks" }
-    "GET /tasks/{taskId}"               = { path = "/tasks/{taskId}", method = "GET", function = "tasks" }
-    "PUT /tasks/{taskId}"               = { path = "/tasks/{taskId}", method = "PUT", function = "tasks" }
-    "DELETE /tasks/{taskId}"            = { path = "/tasks/{taskId}", method = "DELETE", function = "tasks" }
-    "POST /tasks/{taskId}/assign"       = { path = "/tasks/{taskId}/assign", method = "POST", function = "tasks" }
-    "POST /tasks/{taskId}/notify"       = { path = "/tasks/{taskId}/notify", method = "POST", function = "tasks" }
-    "GET /users"                        = { path = "/users", method = "GET", function = "users" }
-    "POST /users"                       = { path = "/users", method = "POST", function = "users" }
-    "POST /users/{userId}/subscription" = { path = "/users/{userId}/subscription", method = "POST", function = "users" }
+    "POST /tasks"                                       = { path = "/tasks", method = "POST", function = "tasks" }
+    "GET /tasks"                                        = { path = "/tasks", method = "GET", function = "tasks" }
+    "GET /tasks/{taskId}"                               = { path = "/tasks/{taskId}", method = "GET", function = "tasks" }
+    "PUT /tasks/{taskId}"                               = { path = "/tasks/{taskId}", method = "PUT", function = "tasks" }
+    "DELETE /tasks/{taskId}"                            = { path = "/tasks/{taskId}", method = "DELETE", function = "tasks" }
+    "POST /tasks/{taskId}/assign"                       = { path = "/tasks/{taskId}/assign", method = "POST", function = "tasks" }
+    "POST /tasks/{taskId}/notify"                       = { path = "/tasks/{taskId}/notify", method = "POST", function = "tasks" }
+    "POST /tasks/{taskId}/attachments"                  = { path = "/tasks/{taskId}/attachments", method = "POST", function = "tasks" }
+    "GET /tasks/{taskId}/attachments"                   = { path = "/tasks/{taskId}/attachments", method = "GET", function = "tasks" }
+    "DELETE /tasks/{taskId}/attachments/{attachmentId}" = { path = "/tasks/{taskId}/attachments/{attachmentId}", method = "DELETE", function = "tasks" }
+    "GET /users"                                        = { path = "/users", method = "GET", function = "users" }
+    "POST /users"                                       = { path = "/users", method = "POST", function = "users" }
+    "POST /users/{userId}/subscription"                 = { path = "/users/{userId}/subscription", method = "POST", function = "users" }
   }
 
   path_methods = {
@@ -76,6 +81,20 @@ resource "aws_api_gateway_resource" "task_notify" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   path_part   = "notify"
   parent_id   = aws_api_gateway_resource.task.id
+}
+
+# /tasks/{taskId}/attachments path on the API
+resource "aws_api_gateway_resource" "task_attachments" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  path_part   = "attachments"
+  parent_id   = aws_api_gateway_resource.task.id
+}
+
+# /tasks/{taskId}/attachments/{attachmentId} path on the API
+resource "aws_api_gateway_resource" "task_attachment" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  path_part   = "{attachmentId}"
+  parent_id   = aws_api_gateway_resource.task_attachments.id
 }
 
 # /users path on the API

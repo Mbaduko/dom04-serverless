@@ -5,6 +5,7 @@ import { handleUpdateTask } from "./updateTask.mjs";
 import { handleDeleteTask } from "./deleteTask.mjs";
 import { handleAssignTask } from "./assignTask.mjs";
 import { handleNotifyTask } from "./notifyTask.mjs";
+import { handleDeleteAttachment, handleListAttachments, handleRequestUpload } from "./attachments.mjs";
 import { errorResponse, HttpError } from "../../shared/helper.mjs";
 
 const routes = {
@@ -15,6 +16,9 @@ const routes = {
   "DELETE /tasks/{taskId}": handleDeleteTask,
   "POST /tasks/{taskId}/assign": handleAssignTask,
   "POST /tasks/{taskId}/notify": handleNotifyTask,
+  "POST /tasks/{taskId}/attachments": handleRequestUpload,
+  "GET /tasks/{taskId}/attachments": handleListAttachments,
+  "DELETE /tasks/{taskId}/attachments/{attachmentId}": handleDeleteAttachment,
 };
 
 export const handler = async (event) => {

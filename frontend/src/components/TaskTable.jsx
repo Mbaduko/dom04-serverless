@@ -75,11 +75,15 @@ export default function TaskTable({ tasks, isAdmin, members, busyId, actions }) 
                   {isAdmin ? (
                     <Flex gap="xs" wrap="wrap">
                       <Button size="small" onClick={() => actions.edit(task)} isDisabled={busy}>Edit</Button>
+                      <Button size="small" onClick={() => actions.files(task)}>Files</Button>
                       <Button size="small" onClick={() => actions.notify(task)} isDisabled={busy || !task.assignedTo}>Notify</Button>
                       <Button size="small" colorTheme="error" onClick={() => actions.remove(task)} isDisabled={busy}>Delete</Button>
                     </Flex>
                   ) : (
-                    <Text fontSize="small" color="font.tertiary">Updated {formatDate(task.updatedAt)}</Text>
+                    <Flex direction="column" gap="xs" alignItems="flex-start">
+                      <Button size="small" onClick={() => actions.files(task)}>Files</Button>
+                      <Text fontSize="small" color="font.tertiary">Updated {formatDate(task.updatedAt)}</Text>
+                    </Flex>
                   )}
                 </TableCell>
               </TableRow>

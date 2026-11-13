@@ -49,6 +49,26 @@ data "aws_iam_policy_document" "dynamodb_policy" {
     actions   = ["sns:Publish"]
     resources = [aws_sns_topic.notifications.arn]
   }
+
+  statement {
+    actions = [
+      "s3:PutObject",
+      "s3:GetObject",
+      "s3:DeleteObject",
+    ]
+    resources = ["${aws_s3_bucket.attachments.arn}/tasks/*"]
+  }
+
+  statement {
+    actions   = ["s3:ListBucket"]
+    resources = [aws_s3_bucket.attachments.arn]
+
+    condition {
+      test     = "StringLike"
+      variable = "s3:prefix"
+      values   = ["tasks/*"]
+    }
+  }
 }
 
 # CloudWatch log group for the Lambda function's logs
@@ -108,6 +128,7 @@ resource "aws_lambda_function" "backend" {
       TOPIC_ARN              = aws_sns_topic.notifications.arn
       APP_URL                = local.allowed_origin
       NOTIFICATION_TIME_ZONE = var.notification_time_zone
+      ATTACHMENTS_BUCKET     = aws_s3_bucket.attachments.bucket
     }
   }
 }

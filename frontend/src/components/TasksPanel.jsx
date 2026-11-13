@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Alert, Button, Flex, Heading, Loader, SelectField } from '@aws-amplify/ui-react'
 import { api } from '../api'
 import { STATUS_LABELS, STATUSES } from '../format'
+import AttachmentsPanel from './AttachmentsPanel'
 import TaskForm from './TaskForm'
 import TaskTable from './TaskTable'
 
@@ -13,6 +14,7 @@ export default function TasksPanel({ isAdmin, members = [] }) {
   const [busyId, setBusyId] = useState(null)
   const [editing, setEditing] = useState(null)
   const [message, setMessage] = useState(null)
+  const [filesFor, setFilesFor] = useState(null)
 
   const load = useCallback(async (token) => {
     setLoading(true)
@@ -49,6 +51,7 @@ export default function TasksPanel({ isAdmin, members = [] }) {
 
   const actions = {
     edit: (task) => setEditing(task),
+    files: (task) => setFilesFor(task),
     setStatus: (task, value) =>
       run(task, () => api.updateTask(task.taskId, { status: value }), () => 'Status updated').then(replace).catch(() => {}),
     assign: (task, userId) =>
@@ -58,7 +61,10 @@ export default function TasksPanel({ isAdmin, members = [] }) {
     remove: (task) => {
       if (!window.confirm(`Delete "${task.title}"?`)) return
       run(task, () => api.deleteTask(task.taskId), () => 'Task deleted')
-        .then(() => setTasks((current) => current.filter((t) => t.taskId !== task.taskId)))
+        .then(() => {
+          setTasks((current) => current.filter((t) => t.taskId !== task.taskId))
+          if (filesFor?.taskId === task.taskId) setFilesFor(null)
+        })
         .catch(() => {})
     },
   }
@@ -101,6 +107,10 @@ export default function TasksPanel({ isAdmin, members = [] }) {
           onSubmit={(payload) => saveForm(payload).catch(() => {})}
           onCancel={() => setEditing(null)}
         />
+      )}
+
+      {filesFor && (
+        <AttachmentsPanel key={filesFor.taskId} task={filesFor} onClose={() => setFilesFor(null)} />
       )}
 
       {loading && tasks.length === 0 ? (
