@@ -54,7 +54,7 @@ export default function TasksPanel({ isAdmin, members = [] }) {
     assign: (task, userId) =>
       run(task, () => api.assignTask(task.taskId, userId), (t) => `Assigned to ${t.assigneeEmail}`).then(replace).catch(() => {}),
     notify: (task) =>
-      run(task, () => api.notifyTask(task.taskId), (r) => `Reminder queued for ${r.recipient}`).catch(() => {}),
+      run(task, () => api.notifyTask(task.taskId), (r) => `Notification sent to ${r.recipient}`).catch(() => {}),
     remove: (task) => {
       if (!window.confirm(`Delete "${task.title}"?`)) return
       run(task, () => api.deleteTask(task.taskId), () => 'Task deleted')

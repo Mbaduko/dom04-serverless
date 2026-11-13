@@ -18,6 +18,8 @@ export async function handleUpdateTask(event) {
   if (changes.status === "DONE" && task.status !== "DONE") changes.completedAt = now;
 
   const remove = changes.status && changes.status !== "DONE" && task.completedAt ? ["completedAt"] : [];
+  // A new deadline gets fresh "due soon" and "overdue" reminders
+  if (changes.deadline && changes.deadline !== task.deadline) remove.push("dueSoonNotifiedAt", "overdueNotifiedAt");
 
   const names = {};
   const values = {};

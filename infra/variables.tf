@@ -23,3 +23,20 @@ variable "log_retention_days" {
   description = "Number of days to retain logs in CloudWatch"
   type        = number
 }
+variable "notification_time_zone" {
+  description = "IANA time zone used to show dates in notification emails"
+  type        = string
+  default     = "UTC"
+}
+
+variable "reminder_schedule" {
+  description = "How often the deadline reminder Lambda runs"
+  type        = string
+  default     = "rate(1 hour)"
+}
+
+variable "reminder_window_hours" {
+  description = "Send a due-soon reminder when a deadline is within this many hours"
+  type        = number
+  default     = 24
+}

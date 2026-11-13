@@ -1,10 +1,12 @@
 import { handleCreateUser } from "./createUser.mjs";
 import { handleListUsers } from "./listUsers.mjs";
+import { handleSubscribeUser } from "./subscribeUser.mjs";
 import { errorResponse, HttpError } from "../../shared/helper.mjs";
 
 const routes = {
   "POST /users": handleCreateUser,
   "GET /users": handleListUsers,
+  "POST /users/{userId}/subscription": handleSubscribeUser,
 };
 
 export const handler = async (event) => {

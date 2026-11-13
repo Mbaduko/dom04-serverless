@@ -8,6 +8,7 @@ import { HttpError, readBody, respond } from "../../shared/helper.mjs";
 import { db, table } from "../../shared/db.mjs";
 import { getUser, requireAdmin, ROLES } from "../../shared/auth.mjs";
 import { validateNewUser } from "../../shared/validation.mjs";
+import { subscribeEmail } from "../../shared/notifications.mjs";
 
 const USERS_TABLE = table("USERS_TABLE");
 const USER_POOL_ID = table("USER_POOL_ID");
@@ -58,5 +59,14 @@ export async function handleCreateUser(event) {
 
   await db.send(new PutCommand({ TableName: USERS_TABLE, Item: profile }));
 
-  return respond(201, profile);
+  // The user already exists at this point, so a failed subscription must not fail the request
+  let notifications = "PENDING";
+  try {
+    await subscribeEmail(email);
+  } catch (error) {
+    console.error("SUBSCRIBE_FAILED::", error);
+    notifications = "NOT_SUBSCRIBED";
+  }
+
+  return respond(201, { ...profile, notifications });
 }

@@ -64,4 +64,5 @@ export const api = {
   notifyTask: (taskId) => request('POST', `/tasks/${taskId}/notify`),
   listUsers: (query) => request('GET', '/users', { query }),
   createUser: (user) => request('POST', '/users', { body: user }),
+  subscribeUser: (userId) => request('POST', `/users/${userId}/subscription`),
 }

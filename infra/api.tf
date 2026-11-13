@@ -2,11 +2,12 @@ locals {
   allowed_origin = "https://${aws_cloudfront_distribution.frontend.domain_name}"
 
   api_paths = {
-    "/tasks"                 = aws_api_gateway_resource.tasks.id
-    "/tasks/{taskId}"        = aws_api_gateway_resource.task.id
-    "/tasks/{taskId}/assign" = aws_api_gateway_resource.task_assign.id
-    "/tasks/{taskId}/notify" = aws_api_gateway_resource.task_notify.id
-    "/users"                 = aws_api_gateway_resource.users.id
+    "/tasks"                       = aws_api_gateway_resource.tasks.id
+    "/tasks/{taskId}"              = aws_api_gateway_resource.task.id
+    "/tasks/{taskId}/assign"       = aws_api_gateway_resource.task_assign.id
+    "/tasks/{taskId}/notify"       = aws_api_gateway_resource.task_notify.id
+    "/users"                       = aws_api_gateway_resource.users.id
+    "/users/{userId}/subscription" = aws_api_gateway_resource.user_subscription.id
   }
 
   api_functions = {
@@ -15,15 +16,16 @@ locals {
   }
 
   api_routes = {
-    "POST /tasks"                 = { path = "/tasks", method = "POST", function = "tasks" }
-    "GET /tasks"                  = { path = "/tasks", method = "GET", function = "tasks" }
-    "GET /tasks/{taskId}"         = { path = "/tasks/{taskId}", method = "GET", function = "tasks" }
-    "PUT /tasks/{taskId}"         = { path = "/tasks/{taskId}", method = "PUT", function = "tasks" }
-    "DELETE /tasks/{taskId}"      = { path = "/tasks/{taskId}", method = "DELETE", function = "tasks" }
-    "POST /tasks/{taskId}/assign" = { path = "/tasks/{taskId}/assign", method = "POST", function = "tasks" }
-    "POST /tasks/{taskId}/notify" = { path = "/tasks/{taskId}/notify", method = "POST", function = "tasks" }
-    "GET /users"                  = { path = "/users", method = "GET", function = "users" }
-    "POST /users"                 = { path = "/users", method = "POST", function = "users" }
+    "POST /tasks"                       = { path = "/tasks", method = "POST", function = "tasks" }
+    "GET /tasks"                        = { path = "/tasks", method = "GET", function = "tasks" }
+    "GET /tasks/{taskId}"               = { path = "/tasks/{taskId}", method = "GET", function = "tasks" }
+    "PUT /tasks/{taskId}"               = { path = "/tasks/{taskId}", method = "PUT", function = "tasks" }
+    "DELETE /tasks/{taskId}"            = { path = "/tasks/{taskId}", method = "DELETE", function = "tasks" }
+    "POST /tasks/{taskId}/assign"       = { path = "/tasks/{taskId}/assign", method = "POST", function = "tasks" }
+    "POST /tasks/{taskId}/notify"       = { path = "/tasks/{taskId}/notify", method = "POST", function = "tasks" }
+    "GET /users"                        = { path = "/users", method = "GET", function = "users" }
+    "POST /users"                       = { path = "/users", method = "POST", function = "users" }
+    "POST /users/{userId}/subscription" = { path = "/users/{userId}/subscription", method = "POST", function = "users" }
   }
 
   path_methods = {
@@ -81,6 +83,20 @@ resource "aws_api_gateway_resource" "users" {
   rest_api_id = aws_api_gateway_rest_api.api.id
   path_part   = "users"
   parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+}
+
+# /users/{userId} path on the API
+resource "aws_api_gateway_resource" "user" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  path_part   = "{userId}"
+  parent_id   = aws_api_gateway_resource.users.id
+}
+
+# /users/{userId}/subscription path on the API
+resource "aws_api_gateway_resource" "user_subscription" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  path_part   = "subscription"
+  parent_id   = aws_api_gateway_resource.user.id
 }
 
 # One method per route, each requiring a Cognito login

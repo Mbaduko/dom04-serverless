@@ -46,7 +46,13 @@ export default function Dashboard({ signOut }) {
               {
                 label: 'Team',
                 value: 'team',
-                content: <TeamPanel users={users} onCreated={(user) => setUsers((current) => [...current, user])} />,
+                content: (
+                  <TeamPanel
+                    users={users}
+                    onCreated={(user) => setUsers((current) => [...current, user])}
+                    onUpdated={(user) => setUsers((current) => current.map((u) => (u.userId === user.userId ? user : u)))}
+                  />
+                ),
               },
             ]}
           />

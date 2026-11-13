@@ -4,6 +4,9 @@ resource "aws_dynamodb_table" "tasks" {
   hash_key     = "taskId"
   billing_mode = "PAY_PER_REQUEST"
 
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
   attribute {
     name = "taskId"
     type = "S"
@@ -19,6 +22,16 @@ resource "aws_dynamodb_table" "tasks" {
     type = "S"
   }
 
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "deadline"
+    type = "S"
+  }
+
   global_secondary_index {
     name            = "assignedTo-createdAt-index"
     projection_type = "ALL"
@@ -30,6 +43,21 @@ resource "aws_dynamodb_table" "tasks" {
 
     key_schema {
       attribute_name = "createdAt"
+      key_type       = "RANGE"
+    }
+  }
+
+  global_secondary_index {
+    name            = "status-deadline-index"
+    projection_type = "ALL"
+
+    key_schema {
+      attribute_name = "status"
+      key_type       = "HASH"
+    }
+
+    key_schema {
+      attribute_name = "deadline"
       key_type       = "RANGE"
     }
   }

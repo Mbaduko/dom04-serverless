@@ -44,6 +44,11 @@ data "aws_iam_policy_document" "dynamodb_policy" {
     actions   = ["dynamodb:GetItem"]
     resources = [aws_dynamodb_table.users.arn]
   }
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.notifications.arn]
+  }
 }
 
 # CloudWatch log group for the Lambda function's logs
@@ -97,9 +102,12 @@ resource "aws_lambda_function" "backend" {
 
   environment {
     variables = {
-      TASKS_TABLE    = aws_dynamodb_table.tasks.name
-      USERS_TABLE    = aws_dynamodb_table.users.name
-      ALLOWED_ORIGIN = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+      TASKS_TABLE            = aws_dynamodb_table.tasks.name
+      USERS_TABLE            = aws_dynamodb_table.users.name
+      ALLOWED_ORIGIN         = "https://${aws_cloudfront_distribution.frontend.domain_name}"
+      TOPIC_ARN              = aws_sns_topic.notifications.arn
+      APP_URL                = local.allowed_origin
+      NOTIFICATION_TIME_ZONE = var.notification_time_zone
     }
   }
 }
@@ -141,9 +149,18 @@ data "aws_iam_policy_document" "users_lambda_policy" {
   statement {
     actions = [
       "dynamodb:PutItem",
+      "dynamodb:GetItem",
       "dynamodb:Scan",
     ]
     resources = [aws_dynamodb_table.users.arn]
+  }
+
+  statement {
+    actions = [
+      "sns:Subscribe",
+      "sns:ListSubscriptionsByTopic",
+    ]
+    resources = [aws_sns_topic.notifications.arn]
   }
 
   statement {
@@ -175,6 +192,7 @@ resource "aws_lambda_function" "users" {
     variables = {
       USERS_TABLE    = aws_dynamodb_table.users.name
       USER_POOL_ID   = aws_cognito_user_pool.users.id
+      TOPIC_ARN      = aws_sns_topic.notifications.arn
       ALLOWED_ORIGIN = "https://${aws_cloudfront_distribution.frontend.domain_name}"
     }
   }

@@ -5,10 +5,17 @@ import {
 import { api } from '../api'
 import { formatDate } from '../format'
 
-export default function TeamPanel({ users, onCreated }) {
+const NOTIFICATION_BADGES = {
+  CONFIRMED: { label: 'Confirmed', variation: 'success' },
+  PENDING: { label: 'Pending confirmation', variation: 'warning' },
+  NOT_SUBSCRIBED: { label: 'Not subscribed', variation: 'error' },
+}
+
+export default function TeamPanel({ users, onCreated, onUpdated }) {
   const [form, setForm] = useState({ email: '', name: '', role: 'TeamMember' })
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState(null)
+  const [busyId, setBusyId] = useState(null)
 
   const update = (field) => (event) => setForm({ ...form, [field]: event.target.value })
 
@@ -19,12 +26,29 @@ export default function TeamPanel({ users, onCreated }) {
     try {
       const user = await api.createUser({ ...form, name: form.name || undefined })
       onCreated(user)
-      setMessage({ type: 'success', text: `Invitation sent to ${user.email}` })
+      setMessage({
+        type: 'success',
+        text: `Invitation sent to ${user.email}. They must also confirm the "AWS Notification - Subscription Confirmation" email to receive task updates.`,
+      })
       setForm({ email: '', name: '', role: 'TeamMember' })
     } catch (error) {
       setMessage({ type: 'error', text: error.message })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const subscribe = async (user) => {
+    setBusyId(user.userId)
+    setMessage(null)
+    try {
+      const result = await api.subscribeUser(user.userId)
+      onUpdated({ ...user, notifications: result.notifications })
+      setMessage({ type: 'success', text: `Confirmation email sent to ${user.email}` })
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message })
+    } finally {
+      setBusyId(null)
     }
   }
 
@@ -62,6 +86,7 @@ export default function TeamPanel({ users, onCreated }) {
               <TableCell as="th">Name</TableCell>
               <TableCell as="th">Email</TableCell>
               <TableCell as="th">Role</TableCell>
+              <TableCell as="th">Notifications</TableCell>
               <TableCell as="th">Added</TableCell>
             </TableRow>
           </TableHead>
@@ -74,6 +99,18 @@ export default function TeamPanel({ users, onCreated }) {
                   <Badge variation={user.role === 'Admin' ? 'info' : undefined}>
                     {user.role === 'Admin' ? 'Admin' : 'Team member'}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <Flex gap="xs" alignItems="center" wrap="wrap">
+                    <Badge variation={NOTIFICATION_BADGES[user.notifications]?.variation}>
+                      {NOTIFICATION_BADGES[user.notifications]?.label ?? 'Unknown'}
+                    </Badge>
+                    {user.notifications !== 'CONFIRMED' && (
+                      <Button size="small" isLoading={busyId === user.userId} onClick={() => subscribe(user)}>
+                        Send confirmation
+                      </Button>
+                    )}
+                  </Flex>
                 </TableCell>
                 <TableCell>{formatDate(user.createdAt)}</TableCell>
               </TableRow>
