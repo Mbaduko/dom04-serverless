@@ -259,6 +259,23 @@ resource "aws_api_gateway_stage" "api_stage" {
   rest_api_id   = aws_api_gateway_rest_api.api.id
   stage_name    = var.environment
   deployment_id = aws_api_gateway_deployment.api_deployment.id
+
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.api_access.arn
+    format = jsonencode({
+      requestId = "$context.requestId"
+      time      = "$context.requestTime"
+      ip        = "$context.identity.sourceIp"
+      user      = "$context.authorizer.claims.email"
+      method    = "$context.httpMethod"
+      path      = "$context.resourcePath"
+      status    = "$context.status"
+      latencyMs = "$context.responseLatency"
+      error     = "$context.error.message"
+    })
+  }
+
+  depends_on = [aws_api_gateway_account.this]
 }
 
 # Allows API Gateway to invoke the Lambda function on any route

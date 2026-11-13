@@ -40,3 +40,8 @@ variable "reminder_window_hours" {
   type        = number
   default     = 24
 }
+
+variable "alert_email" {
+  description = "Email address that receives CloudWatch alarm notifications"
+  type        = string
+}

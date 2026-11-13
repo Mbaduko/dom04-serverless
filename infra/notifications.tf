@@ -58,7 +58,7 @@ data "aws_iam_policy_document" "notifier_lambda_policy" {
   }
 }
 
-# Inline policy on the notifier Lambda role
+# Inline policy on the notifier Lambda role 
 resource "aws_iam_role_policy" "notifier_lambda_policy" {
   name   = "${var.project}-${var.environment}-notifier-lambda-policy"
   policy = data.aws_iam_policy_document.notifier_lambda_policy.json
