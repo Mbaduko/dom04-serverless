@@ -45,3 +45,5 @@ Thumbs.db
 .vscode/
 *.swp
 build/*
+# Local architecture notes (not tracked)
+FLOW.md
